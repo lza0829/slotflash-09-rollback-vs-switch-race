@@ -1,6 +1,6 @@
 from __future__ import annotations
 from fastapi import APIRouter, HTTPException
-from app.db import db
+from app.db import db, tx
 from app.services.common import now_iso
 
 router = APIRouter(tags=["固件仓"])
@@ -17,7 +17,7 @@ def list_firmwares():
 
 @router.post("/固件/{fid}/推进校验")
 def advance_verify(fid: int):
-    with db() as conn:
+    with tx() as conn:
         row = conn.execute("SELECT * FROM firmwares WHERE id=?", (fid,)).fetchone()
         if not row:
             raise HTTPException(404, "固件不存在")

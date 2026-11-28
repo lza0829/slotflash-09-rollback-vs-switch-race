@@ -55,6 +55,17 @@ def seed_if_empty() -> None:
         "INSERT INTO rollback_policy(id, mode, hold_sec) VALUES (1,?,?)",
         ("失败硬退", 20),
     )
+    # 裁决底账：基槽即种子现运行槽；争用窗由首笔落点按 hold_sec 开启。
+    conn.execute(
+        "INSERT INTO board_arbitration(board_id, base_slot, previous_slot, seq, updated_at)"
+        " VALUES (?,?,?,?,?)",
+        (1, "A", None, 0, ts),
+    )
+    conn.execute(
+        "INSERT INTO board_arbitration(board_id, base_slot, previous_slot, seq, updated_at)"
+        " VALUES (?,?,?,?,?)",
+        (2, "B", None, 0, ts),
+    )
     conn.execute(
         "INSERT INTO settings(key, value) VALUES (?,?)",
         ("verify_digest_required", "1"),

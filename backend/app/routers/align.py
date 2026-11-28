@@ -1,13 +1,15 @@
 from __future__ import annotations
 from fastapi import APIRouter
-from app.db import db
+from app.db import snapshot
+from app.services import arbitration
 
 router = APIRouter(tags=["校验屏"])
 
 
 @router.get("/校验")
 def align_snapshot():
-    with db() as conn:
+    # 单事务一致快照：现运行格与硬退争用桶必须对读于同一笔。
+    with snapshot() as conn:
         slots = conn.execute(
             """
             SELECT s.board_id, b.name AS board_name, s.slot_key, s.role, s.write_state,
@@ -23,9 +25,15 @@ def align_snapshot():
             "SELECT id, board_id, target_slot, status FROM flash_orders ORDER BY id DESC LIMIT 20"
         ).fetchall()
         policy = conn.execute("SELECT mode, hold_sec FROM rollback_policy WHERE id=1").fetchone()
+        board_ids = [r["id"] for r in conn.execute("SELECT id FROM boards ORDER BY id")]
+        replays = [arbitration.board_replay(conn, bid) for bid in board_ids]
+        arms = arbitration.arm_summary(conn)
         return {
             "闪槽投影": [dict(r) for r in slots],
             "启动链投影": [dict(r) for r in boots],
             "写闪近单": [dict(r) for r in orders],
             "回退拨": dict(policy) if policy else {},
+            "裁决口径": arms,
+            "重放": replays,
+            "自洽": all(r["自洽"] for r in replays) if replays else True,
         }

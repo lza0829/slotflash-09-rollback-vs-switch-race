@@ -1,7 +1,7 @@
 from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from app.db import db
+from app.db import db, tx
 from app.services.common import now_iso
 
 router = APIRouter(tags=["写闪单"])
@@ -31,7 +31,7 @@ def list_orders():
 
 @router.post("/写闪单")
 def create_order(body: FlashBody):
-    with db() as conn:
+    with tx() as conn:
         board = conn.execute("SELECT * FROM boards WHERE id=?", (body.board_id,)).fetchone()
         fw = conn.execute("SELECT * FROM firmwares WHERE id=?", (body.firmware_id,)).fetchone()
         slot = conn.execute(
@@ -64,7 +64,7 @@ def create_order(body: FlashBody):
 
 @router.post("/写闪单/{oid}/收口")
 def close_order(oid: int):
-    with db() as conn:
+    with tx() as conn:
         o = conn.execute("SELECT * FROM flash_orders WHERE id=?", (oid,)).fetchone()
         if not o:
             raise HTTPException(404, "写闪单不存在")

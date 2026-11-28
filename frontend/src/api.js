@@ -17,6 +17,10 @@ export const api = {
   closeOrder: (id) => j(`/api/写闪单/${id}/收口`, { method: "POST" }),
   boot: () => j("/api/启动链"),
   switchSlot: (body) => j("/api/启动链/切槽", { method: "POST", body: JSON.stringify(body) }),
+  // 硬退写口：与切槽同一笔裁决；同一争用窗内只认让路臂给出的一胜。
+  hardRollback: (body) => j("/api/启动链/硬退", { method: "POST", body: JSON.stringify(body) }),
+  replay: (boardId) => j(`/api/启动链/${boardId}/重放`),
+  yieldRule: () => j("/api/裁决口径"),
   setBootColor: (boardId, body) =>
     j(`/api/启动链/${boardId}/探针色`, { method: "POST", body: JSON.stringify(body) }),
   policy: () => j("/api/回退拨"),

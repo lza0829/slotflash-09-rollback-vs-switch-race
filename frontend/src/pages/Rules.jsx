@@ -4,9 +4,11 @@ import { api } from "../api";
 export default function Rules() {
   const [settings, setSettings] = useState({});
   const [events, setEvents] = useState([]);
+  const [arm, setArm] = useState(null);
   useEffect(() => {
     api.settings().then(setSettings);
     api.events().then(setEvents);
+    api.yieldRule().then(setArm);
   }, []);
 
   const rows = Object.entries(settings || {});
@@ -16,6 +18,12 @@ export default function Rules() {
       <section className="panel">
         <h1>板规</h1>
         <p className="muted">全局默认、校验门槛与超时口径，供写闪与启动链旁读。</p>
+        {arm && (
+          <p className="mono">
+            硬退 × 切槽让路臂：<span className="cyan">{arm.让路臂}</span> · {arm.双成禁止} ·{" "}
+            {arm.缺口}
+          </p>
+        )}
         <table className="table">
           <thead>
             <tr>
